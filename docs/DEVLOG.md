@@ -2,6 +2,29 @@
 
 Una entrada por sesión, la más reciente arriba. Formato en la skill `/cierre`.
 
+## 2026-11-15 — Sesión 2: resolución completa del proyecto
+
+**Objetivo:** resolver los 4 puntos de `pr_CA.pdf` y redactar el reporte.
+
+**Hecho:**
+- Scripts `proyecto/R/01_eda.R`, `02_kmedias.R`, `03_mixturas.R` y `04_mds.R`; todos corren desde la raíz.
+- `reporte_zorros.Rnw` completo: 6 secciones, 6 figuras, 3 tablas y un apéndice con código y salida de consola (vía `ref.label`).
+- Compilado: cuerpo de 7 páginas carta (el límite es 8) y 15 en total; sin código en el cuerpo; sin referencias rotas.
+- Revisión visual página por página. Se corrigieron la posición de las tablas, los formatos numéricos, las etiquetas de los dendrogramas (ahora B/U) y la leyenda del MDS.
+- Se corrigió una afirmación falsa del borrador: los mal clasificados no están todos en la zona de los largos del MDS (B.20 es corto y ligero).
+- Hook `validar_r.sh`: ahora acepta referencias `<<etiqueta>>` dentro de chunks y usa `[[:space:]]`, porque `Rscript -e` rompe `\\s`.
+
+**Resultados clave:**
+- B y U no difieren en altura (p = 0.68), pero sí en longitud (U +8.4 cm, p < 0.001) y peso (U −503 g, p < 0.001).
+- Datos estandarizados, Ward, k = 2. k-medias: grupos de 17 y 18; coinciden con el país en 32/35 (mal: B.2, B.20, B.8); BSS/TSS = 30.4 %.
+- Siluetas de 0.28 a 0.32 para todo k: la estructura es moderada. k = 3 solo separa a los zorros altos de ambos países.
+- Mclust G = 2, EEE: π = 0.499/0.501, misma partición que k-medias (ARI = 1); B.8 dudoso (0.49/0.51). El BIC libre prefiere G = 1.
+- MDS sin escalar: 99.6 % de variación en 2 dimensiones; Dim1 ≈ longitud (r = 0.997), Dim2 ≈ altura (r = 0.921); el peso no aparece.
+
+**Pendiente / bloqueos:** visto bueno de Carlos sobre el reporte; revisión con `revisor-reporte`; fecha de entrega.
+
+**Siguiente paso:** que Carlos lea `proyecto/reporte/reporte_zorros.pdf` y decida ajustes antes de entregar.
+
 ## 2026-11-15 — Sesión 1: arranque
 
 **Objetivo:** revisar el repo y montar el flujo de trabajo del proyecto final.

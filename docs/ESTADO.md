@@ -6,42 +6,44 @@ Leyenda: ⬜ pendiente · 🟨 en progreso · ✅ hecho
 ## Infraestructura
 - ✅ Repo git, `CLAUDE.md`, hooks, skills y subagente revisor
 - ✅ `proyecto/R/00_setup.R` (lectura de datos, paquetes, semilla, colores U/B)
-- ✅ Esqueleto de `proyecto/reporte/reporte_zorros.Rnw` (estilo de la tarea)
+- ✅ Remoto en GitHub (`cmayorgat44/clasificacion_no_supervisada`, rama `main`)
 
 ## 1. Análisis exploratorio (`R/01_eda.R`)
-- ⬜ Responder: ¿por qué hace falta `header = TRUE`?
-- ⬜ Resumen numérico de F1–F3 (global y por país)
-- ⬜ Histogramas / densidades
-- ⬜ Diagramas de dispersión por pares (color U/B)
-- ⬜ Cajas y bigotes por país
-- ⬜ Decidir si se escalan las variables (→ `DECISIONES.md`)
+- ✅ Responder: ¿por qué hace falta `header = TRUE`? (verificado en R)
+- ✅ Resumen numérico de F1–F3 (global y por país) + pruebas t
+- ✅ Histogramas (diagonal del `pairs`)
+- ✅ Diagramas de dispersión por pares (color y letra U/B)
+- ✅ Cajas y bigotes por país
+- ✅ Decidir si se escalan las variables → se estandarizan
 
 ## 2. Jerárquico + k-medias (`R/02_kmedias.R`)
-- ⬜ Dendrogramas con varios enlaces y elección justificada del enlace
-- ⬜ Criterios para k (TWSS/codo, silueta, salto en el dendrograma)
-- ⬜ k-medias con `nstart = 100`; tamaños, vectores de medias, BSS/TSS
-- ⬜ Justificación de k "como investigador" (relación con U/B)
+- ✅ Dendrogramas simple/completo/promedio/Ward; Ward elegido y justificado
+- ✅ Criterios para k (TWSS y silueta); k = 3 analizado como alternativa
+- ✅ k-medias k = 2 con `nstart = 100`; tamaños, vectores de medias, BSS/TSS
+- ✅ Justificación de k = 2 "como investigador" (32/35 coinciden con el país)
 
 ## 3. Mixtura de densidades (`R/03_mixturas.R`)
-- ⬜ `Mclust` con el k elegido; modelo elegido y BIC
-- ⬜ Vectores de medias, ponderadores π y matrices de covarianza
-- ⬜ Comparación con k-medias (tabla cruzada, ARI, incertidumbre)
+- ✅ `Mclust` G = 2: modelo EEE; BIC libre prefiere G = 1 (se discute)
+- ✅ Vectores de medias, ponderadores π y matriz de covarianza común
+- ✅ Comparación con k-medias (ARI = 1; B.8 con incertidumbre 0.49)
 
 ## 4. Escalamiento multidimensional (`R/04_mds.R`)
-- ⬜ Matriz Δ euclidiana de los datos originales
-- ⬜ `cmdscale` con k = 2, gráfica con `pch = rownames(X)`
-- ⬜ Proporción de la variación total en 2 dimensiones (eigenvalores)
+- ✅ Matriz Δ euclidiana de los datos originales
+- ✅ `cmdscale` con k = 2, gráfica con `pch = rownames(X)`
+- ✅ Proporción de variación: 99.6 % (Dim1 84.2 %, Dim2 15.4 %)
 
 ## Reporte (`reporte/reporte_zorros.Rnw`)
-- ⬜ Redacción de las secciones para un experto en zorros con estadística básica
-- ⬜ Figuras más relevantes, explicadas en el texto
-- ⬜ Máximo 8 páginas sin contar el apéndice; sin código en el cuerpo
-- ⬜ Apéndice con todo el código
+- ✅ Redacción de todas las secciones para un experto en zorros
+- ✅ 6 figuras y 3 tablas, todas citadas en el texto
+- ✅ Cuerpo de 7 páginas carta, 11 pt, sin código (verificado con el .aux y pdftotext)
+- ✅ Apéndice con código y salida de consola (vía `ref.label`)
+- ⬜ Lectura y visto bueno de Carlos
 - ⬜ Revisión con el subagente `revisor-reporte`
 
 ## Entrega
-- ⬜ PDF final
+- 🟨 PDF final: `proyecto/reporte/reporte_zorros.pdf` (pendiente de visto bueno)
 - ⬜ Envío a jacob.cancino@anahuac.mx (fecha por confirmar)
 
 ## Bloqueos / dudas para el profe
 - La fecha de entrega aún no se define.
+- Opcional: confirmar si espera escalar las variables antes de k-medias (aquí se justifica hacerlo).

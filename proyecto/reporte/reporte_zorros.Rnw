@@ -8,6 +8,7 @@
 \usepackage{float}
 \usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
+\floatplacement{table}{H}
 
 \renewcommand{\figurename}{Figura}
 \renewcommand{\tablename}{Tabla}
@@ -35,9 +36,12 @@ options(width = 80)
 @
 
 <<cargar_scripts, include=FALSE>>=
-# root.dir ya es la raíz del repo. Agregar aquí cada script nuevo de proyecto/R/.
-scripts <- c("proyecto/R/00_setup.R")
-for (s in scripts) knitr::read_chunk(s)
+# root.dir ya es la raíz del repo. Cada script nuevo de proyecto/R/ va aquí.
+knitr::read_chunk("proyecto/R/00_setup.R")
+knitr::read_chunk("proyecto/R/01_eda.R")
+knitr::read_chunk("proyecto/R/02_kmedias.R")
+knitr::read_chunk("proyecto/R/03_mixturas.R")
+knitr::read_chunk("proyecto/R/04_mds.R")
 @
 
 <<setup_paquetes, include=FALSE>>=
@@ -45,6 +49,37 @@ for (s in scripts) knitr::read_chunk(s)
 <<setup_datos, include=FALSE>>=
 @
 <<setup_colores, include=FALSE>>=
+@
+<<eda_lectura, include=FALSE>>=
+@
+<<eda_resumen, include=FALSE>>=
+@
+<<km_escala, include=FALSE>>=
+@
+<<km_dendros, include=FALSE>>=
+@
+<<km_criterios, include=FALSE>>=
+@
+<<km_ajuste, include=FALSE>>=
+@
+<<km_k3, include=FALSE>>=
+@
+<<mc_bic, include=FALSE>>=
+@
+<<mc_ajuste, include=FALSE>>=
+@
+<<mc_comparacion, include=FALSE>>=
+@
+<<mds_ajuste, include=FALSE>>=
+@
+
+<<formato, include=FALSE>>=
+# Solo presentación: formato de números para el texto y las tablas
+f1 <- function(x) formatC(x, format = "f", digits = 1)
+f2 <- function(x) formatC(x, format = "f", digits = 2)
+pct <- function(x) paste0(formatC(100 * x, format = "f", digits = 1), "\\%")
+crit <- as.data.frame(criterios)
+nB <- sum(pais == "B"); nU <- sum(pais == "U")
 @
 
 \begin{center}
@@ -62,20 +97,139 @@ ID: 00294506
 %=====================================================================
 \section{Introducción}
 
+Se midieron \Sexpr{nrow(X)} zorros rojos machos en tres variables: altura hasta los hombros (F1, cm), longitud del cuerpo (F2, cm) y peso (F3, kg). La pregunta es si estos animales forman grupos naturales y cuántos. Cada animal tiene un identificador cuya letra inicial indica el país de captura (\Sexpr{nB} con ``B'' y \Sexpr{nU} con ``U''). \textbf{Esa etiqueta no se usó para formar los grupos}: solo sirve al final para ver si los grupos que encuentran los métodos coinciden con las poblaciones de origen.
+
+\textbf{Sobre \texttt{header = TRUE}.} La primera línea del archivo trae los nombres de las variables (F1, F2, F3) y cada línea siguiente trae el identificador del zorro y sus tres medidas, es decir, un campo más. Con \texttt{header = TRUE}, R toma esa primera línea como nombres de columna y usa la columna sobrante como nombre de cada fila (el identificador). Si se declara \texttt{header = FALSE}, R intenta leer los nombres como si fueran un dato más y la lectura falla (\textit{``\Sexpr{error_sin_header}''}). Si el argumento se omite, R lo deduce justo porque la primera línea tiene un campo menos; aun así, conviene declararlo para que la lectura no dependa de esa deducción.
+
 %=====================================================================
 \section{Análisis exploratorio}
+
+<<tab_resumen, results="asis">>=
+knitr::kable(resumen[, -1], format = "latex", booktabs = TRUE, linesep = "", align = "rrr",
+             col.names = c("Todos", "País B", "País U"),
+             caption = "Media (desviación estándar) de cada medida.")
+@
+
+La Tabla~\ref{tab:tab_resumen} y la Figura~\ref{fig:fig_cajas} muestran tres hechos:
+\begin{itemize}[nosep]
+\item \textbf{La altura no distingue a los países}: en promedio, \Sexpr{f1(mean(X$F1[pais=="B"]))} cm en B y \Sexpr{f1(mean(X$F1[pais=="U"]))} cm en U (prueba $t$: $p=\Sexpr{f2(p_pais["F1"])}$).
+\item \textbf{Los zorros de U son más largos}, unos \Sexpr{f1(mean(X$F2[pais=="U"]) - mean(X$F2[pais=="B"]))} cm en promedio ($p<0.001$), \textbf{y más ligeros}, alrededor de \Sexpr{round(1000*(mean(X$F3[pais=="B"]) - mean(X$F3[pais=="U"])))} g menos ($p<0.001$). Las cajas de longitud casi no se traslapan.
+\item Las tres medidas están poco correlacionadas en la muestra completa (todas $|r|\le \Sexpr{f2(max(abs(cor(X)[upper.tri(cor(X))])))}$).
+\end{itemize}
+
+<<fig_cajas, fig.width=8, fig.height=2.8, out.width="0.92\\textwidth", fig.cap="Distribución de cada medida por país. Cada punto es un zorro.">>=
+<<eda_cajas>>
+@
+
+<<fig_pairs, fig.width=6.5, fig.height=6.5, out.width="0.6\\textwidth", fig.cap="Diagramas de dispersión por pares (letra y color: país) e histogramas en la diagonal.">>=
+<<eda_pairs>>
+@
+
+En la Figura~\ref{fig:fig_pairs}, el panel que mejor separa es el de longitud (eje horizontal) contra peso (eje vertical), en la fila inferior: los zorros de U tienden a quedar abajo a la derecha (largos y ligeros) y los de B arriba a la izquierda. Ningún histograma muestra por sí solo dos picos claros, así que la estructura de grupos, si existe, es moderada y se ve mejor combinando variables.
+
+\textbf{Decisión: estandarizar.} Las medidas están en unidades distintas y sus varianzas son muy diferentes: \Sexpr{f1(varianzas["F2"])} para la longitud, \Sexpr{f1(varianzas["F1"])} para la altura y \Sexpr{f2(varianzas["F3"])} para el peso. Con las distancias en unidades originales, la longitud decidiría casi sola qué zorros se parecen, y el peso, que sí distingue a los países, no tendría voz. Por eso, para el dendrograma y $k$-medias cada variable se estandarizó (media 0 y desviación estándar 1). Así las tres pesan lo mismo. Los resultados se reportan siempre en las unidades originales.
 
 %=====================================================================
 \section{Número de grupos y $k$-medias}
 
+\textbf{Dendrograma como punto de partida.} La Figura~\ref{fig:fig_dendros} compara cuatro formas de unir grupos. El \textbf{enlace simple} produce el ``efecto cadena'': une zorros de uno en uno y, al cortar en dos grupos, deja a un solo animal aislado contra los otros 34. El \textbf{completo} y el \textbf{promedio} producen particiones desbalanceadas o que mezclan ambos países sin un patrón claro. Elegí el \textbf{método de Ward}, que en cada paso une los dos grupos cuya fusión aumenta menos la variabilidad interna. Es el mismo criterio que minimiza $k$-medias, así que es el punto de partida natural para ese método. Con Ward, el primer corte divide a los zorros en dos grupos de tamaño parecido (recuadros en la figura).
+
+<<fig_dendros, fig.width=8, fig.height=5.6, out.width="0.95\\textwidth", fig.cap="Dendrogramas con datos estandarizados y cuatro tipos de enlace. Cada hoja muestra el país del zorro; en Ward se marcan los dos grupos.">>=
+<<km_dendros_fig>>
+@
+
+\textbf{¿Cuántos grupos?} La Figura~\ref{fig:fig_criterios} muestra dos criterios de $k$-medias (con 100 arranques aleatorios para no quedarse en una mala solución). La suma de cuadrados dentro de los grupos (TWSS) baja de \Sexpr{f1(crit$TWSS[1])} a \Sexpr{f1(crit$TWSS[2])} con $k=2$ y a \Sexpr{f1(crit$TWSS[3])} con $k=3$; después baja más despacio. La silueta promedio, que vale 1 si cada zorro está claramente en su grupo y 0 si está en la frontera, queda entre \Sexpr{f2(min(crit$silueta, na.rm=TRUE))} y \Sexpr{f2(max(crit$silueta, na.rm=TRUE))} para cualquier $k$. Es decir, \textbf{los datos no tienen grupos muy marcados} y la estadística sola no decide entre 2 y 3.
+
+<<fig_criterios, fig.width=8, fig.height=2.8, out.width="0.85\\textwidth", fig.cap="Criterios para elegir k con k-medias sobre datos estandarizados.">>=
+<<km_criterios_fig>>
+@
+
+\textbf{Elegí $k=2$}, por tres razones que importan a quien estudia zorros:
+\begin{enumerate}[nosep]
+\item \textbf{Con $k=3$ el grupo extra es de ``zorros grandes''}: \Sexpr{sum(tab_km3_pais[which.max(medias_km3["F1",]),])} animales de ambos países (\Sexpr{tab_km3_pais[which.max(medias_km3["F1",]),"B"]} de B y \Sexpr{tab_km3_pais[which.max(medias_km3["F1",]),"U"]} de U) con altura media de \Sexpr{f1(max(medias_km3["F1",]))} cm. Eso separa por tamaño individual, no por tipo de zorro, y es una variación que se espera dentro de cualquier población.
+\item \textbf{Con $k=2$ los grupos tienen un perfil biológico claro} (Tabla~\ref{tab:tab_km}): uno de zorros más cortos y pesados, y otro de zorros más largos y ligeros, con la misma altura.
+\item \textbf{El resultado se sostiene con otros métodos}: Ward con $k=2$ y el modelo de mixtura (Sección~4) llegan casi a la misma división.
+\end{enumerate}
+
+<<tab_km, results="asis">>=
+tab <- rbind(f2(medias_km),
+             "Zorros en el grupo" = as.character(table(grupo_km)),
+             "\\quad de ellos, país B" = tab_km_pais[, "B"],
+             "\\quad de ellos, país U" = tab_km_pais[, "U"])
+rownames(tab)[1:3] <- vars
+knitr::kable(tab, format = "latex", booktabs = TRUE, linesep = "", escape = FALSE,
+             align = "rr", col.names = c("Grupo 1", "Grupo 2"),
+             caption = "k-medias con k = 2: vectores de medias (unidades originales) y composición.")
+@
+
+Los vectores de medias de la Tabla~\ref{tab:tab_km} resumen el resultado: la altura es prácticamente igual (\Sexpr{f1(medias_km["F1",1])} contra \Sexpr{f1(medias_km["F1",2])} cm), mientras que el grupo 2 es \Sexpr{f1(medias_km["F2",2]-medias_km["F2",1])} cm más largo y \Sexpr{round(1000*(medias_km["F3",1]-medias_km["F3",2]))} g más ligero. Sin haber usado el país, \textbf{\Sexpr{nrow(X)-length(mal_km)} de los \Sexpr{nrow(X)} zorros quedan en el grupo que corresponde a su país}. Los \Sexpr{length(mal_km)} que no (\Sexpr{paste(mal_km, collapse=", ")}) son zorros de B relativamente largos o ligeros. Los dos grupos explican el \Sexpr{pct(km$betweenss/km$totss)} de la variabilidad total (estandarizada), una proporción modesta que confirma que hay bastante variación dentro de cada grupo.
+
 %=====================================================================
 \section{Modelo de mixtura de densidades}
+
+Un modelo de mixtura supone que cada zorro viene de una de $k=2$ poblaciones, cada una con distribución normal multivariada. El ajuste estima tres cosas: la proporción de la muestra que viene de cada población (\emph{ponderadores} $\pi$), el centro de cada población (\emph{vector de medias}) y su forma (\emph{matriz de covarianza}). A diferencia de $k$-medias, no asigna cada zorro a un grupo de manera tajante, sino que da la probabilidad de que venga de cada población. El modelo se ajustó en unidades originales porque estima su propia escala para cada variable.
+
+Entre las formas posibles de las covarianzas, el BIC eligió el modelo \texttt{\Sexpr{mc$modelName}}: las dos poblaciones tienen \textbf{la misma matriz de covarianza} (mismo volumen, forma y orientación) y solo difieren en su centro. Es un supuesto razonable si se piensa en dos poblaciones de la misma especie que difieren en su tamaño típico, pero no en cómo varían los individuos alrededor de él.
+
+<<tab_mc, results="asis">>=
+tab <- rbind("Ponderador $\\pi$" = formatC(pesos_mc, format = "f", digits = 3),
+             f2(medias_mc))
+rownames(tab)[2:4] <- vars
+knitr::kable(tab, format = "latex", booktabs = TRUE, linesep = "", escape = FALSE,
+             align = "rr", col.names = c("Componente 1", "Componente 2"),
+             caption = "Mixtura normal con k = 2: ponderadores y vectores de medias.")
+@
+
+\begin{equation*}
+\hat\Sigma_1=\hat\Sigma_2=
+\begin{pmatrix}
+\Sexpr{f2(sigma_mc[1,1,1])} & \Sexpr{f2(sigma_mc[1,2,1])} & \Sexpr{f2(sigma_mc[1,3,1])}\\
+\Sexpr{f2(sigma_mc[2,1,1])} & \Sexpr{f2(sigma_mc[2,2,1])} & \Sexpr{f2(sigma_mc[2,3,1])}\\
+\Sexpr{f2(sigma_mc[3,1,1])} & \Sexpr{f2(sigma_mc[3,2,1])} & \Sexpr{f2(sigma_mc[3,3,1])}
+\end{pmatrix}
+\qquad (\text{orden: F1, F2, F3})
+\end{equation*}
+
+\textbf{Lectura de los resultados.}
+\begin{itemize}[nosep]
+\item \textbf{Ponderadores:} las dos poblaciones pesan casi lo mismo (\Sexpr{f2(pesos_mc[1])} y \Sexpr{f2(pesos_mc[2])}), en línea con los 17 y 18 zorros de $k$-medias.
+\item \textbf{Medias:} prácticamente idénticas a las de $k$-medias (Tabla~\ref{tab:tab_mc} contra Tabla~\ref{tab:tab_km}): la componente 2 es la de zorros largos y ligeros.
+\item \textbf{Covarianza:} dentro de cada población, la desviación estándar es de \Sexpr{f1(sqrt(sigma_mc[1,1,1]))} cm en altura, \Sexpr{f1(sqrt(sigma_mc[2,2,1]))} cm en longitud y \Sexpr{round(1000*sqrt(sigma_mc[3,3,1]))} g en peso. Además, el peso está correlacionado con la altura ($r=\Sexpr{f2(cov2cor(sigma_mc[,,1])[1,3])}$) y con la longitud ($r=\Sexpr{f2(cov2cor(sigma_mc[,,1])[2,3])}$). Dentro de un mismo tipo de zorro, los animales más grandes pesan más, como se esperaría. Esa relación no se veía en la muestra completa porque la diferencia entre poblaciones la ocultaba: el grupo largo es el más ligero.
+\end{itemize}
+
+<<fig_mc, fig.width=6.5, fig.height=6.5, out.width="0.6\\textwidth", fig.cap="Clasificación del modelo de mixtura. Las elipses muestran la forma común de las dos poblaciones.">>=
+<<mc_fig>>
+@
+
+\textbf{Comparación con $k$-medias.} Las dos técnicas producen \textbf{exactamente la misma partición} (índice de Rand ajustado $=\Sexpr{f2(ari_mc_km)}$; con el país es $\Sexpr{f2(ari_mc_pais)}$). La mixtura agrega información que $k$-medias no da: todos los demás zorros se asignan con probabilidad de al menos \Sexpr{f2(floor(100*(1 - incert[2]))/100)}, pero \textbf{\Sexpr{names(incert)[1]} queda en la frontera} (probabilidades \Sexpr{f2(prob_dudoso[1])} y \Sexpr{f2(prob_dudoso[2])}). $k$-medias lo asigna al grupo 2 sin advertir esa duda. Las diferencias de fondo entre las técnicas son tres:
+\begin{itemize}[nosep]
+\item $k$-medias supone grupos ``redondos'' en la escala elegida; la mixtura estima la forma de los grupos, incluidas las correlaciones.
+\item $k$-medias depende de cómo se escalen las variables, y la mixtura no.
+\item La mixtura permite comparar modelos con el BIC. Una advertencia honesta: si se deja libre el número de componentes, el BIC prefiere \textbf{una sola población} (\Sexpr{f1(max(bic_todos[1,], na.rm=TRUE))} contra \Sexpr{f1(mc$bic)} con dos). Con solo \Sexpr{nrow(X)} zorros y grupos que se traslapan, los datos no alcanzan para que el BIC justifique el costo de parámetros de un segundo grupo. Que dos métodos distintos coincidan, y que la división corresponda casi por completo al país de origen, es la evidencia más fuerte de que los dos grupos son reales.
+\end{itemize}
 
 %=====================================================================
 \section{Escalamiento multidimensional}
 
+Con la matriz $\Delta$ de distancias euclidianas entre los \Sexpr{nrow(X)} zorros, calculada con las medidas originales, el escalamiento multidimensional busca un mapa de dos dimensiones en el que las distancias entre puntos se parezcan lo más posible a las de $\Delta$. La Figura~\ref{fig:fig_mds} muestra ese mapa: cada zorro aparece con la letra de su país y el color indica su grupo de $k$-medias.
+
+<<fig_mds, fig.width=7, fig.height=4.3, out.width="0.78\\textwidth", fig.cap="Escalamiento multidimensional en 2 dimensiones. Letra: país; color: grupo 1 (negro) o grupo 2 (rojo) de k-medias.">>=
+<<mds_fig>>
+@
+
+\textbf{Proporción de variación.} Las dos dimensiones concentran el \textbf{\Sexpr{pct(prop_abs)}} de la variación absoluta total ($\sum_{i=1}^2|\lambda_i| / \sum_i|\lambda_i|$), así que el mapa representa casi perfectamente las distancias originales. La primera dimensión aporta el \Sexpr{pct(prop_dim[1])} y la segunda el \Sexpr{pct(prop_dim[2])}.
+
+\textbf{Interpretación.} La dimensión 1 es, en la práctica, la \textbf{longitud del cuerpo} (correlación \Sexpr{formatC(cor_mds["Dim1","F2"], format="f", digits=3)}) y la dimensión 2 es la \textbf{altura} (correlación \Sexpr{formatC(cor_mds["Dim2","F1"], format="f", digits=3)}). Las ``U'' quedan a la derecha (zorros largos) y las ``B'' a la izquierda, con poco traslape. La altura, en cambio, mezcla los dos países. El \textbf{peso casi no aparece en el mapa}: en kilogramos su variación es mínima frente a la de los centímetros, así que las distancias sin escalar lo ignoran. Esto confirma por qué se estandarizó antes de agrupar. Los tres zorros de B que $k$-medias puso en el grupo 2 lo ilustran: B.2 aparece entre los largos y B.8 en la zona intermedia, pero B.20 cae del lado de los cortos. B.20 quedó con los de U por su bajo peso (7.9 kg), algo que este mapa no puede mostrar porque ignora el peso.
+
 %=====================================================================
 \section{Conclusiones}
+
+\begin{itemize}[nosep]
+\item Los zorros se dividen de forma razonable en \textbf{dos grupos de tamaño similar}. Ambos tienen la misma altura, pero uno es de animales \textbf{más cortos y pesados} y el otro de animales \textbf{más largos y ligeros}. Esta división coincide con el país de captura en \Sexpr{nrow(X)-length(mal_km)} de \Sexpr{nrow(X)} casos, sin haber usado esa información.
+\item $k$-medias y el modelo de mixtura dan la misma partición. La mixtura añade la forma común de las poblaciones y la incertidumbre de cada asignación; solo \Sexpr{names(incert)[1]} es realmente dudoso.
+\item La estructura es moderada: las siluetas son bajas y, con \Sexpr{nrow(X)} animales, el BIC no logra justificar formalmente dos poblaciones. Una muestra más grande permitiría confirmar el resultado.
+\item La elección de la escala importa: la longitud domina las distancias en unidades originales, como muestra el escalamiento multidimensional. Para formar grupos conviene estandarizar o usar métodos, como la mixtura, que estimen la escala de cada variable.
+\end{itemize}
 
 % Marca el fin del cuerpo: la skill compilar-reporte la usa para contar las 8 páginas.
 \label{fin-reporte}
@@ -83,12 +237,28 @@ ID: 00294506
 %=====================================================================
 \clearpage
 \appendix
-\section{Código de R}
+\section{Código de R y resultados}
 
-Todo el código está en \texttt{proyecto/R/} y se corre desde la raíz del repositorio.
+El código está en \texttt{proyecto/R/} y se corre desde la raíz del repositorio. Cada script de análisis empieza con \texttt{source()} del anterior que necesita (\texttt{00\_setup.R} o \texttt{02\_kmedias.R}). Se muestra el código junto con su salida en consola; las gráficas son las del reporte.
 
-\subsection*{\texttt{00\_setup.R}}
-<<ap_setup, eval=FALSE, echo=TRUE, code=readLines("proyecto/R/00_setup.R")>>=
+\subsection*{\texttt{00\_setup.R}: configuración común}
+<<ap_setup, ref.label=c("setup_paquetes", "setup_datos", "setup_colores"), echo=TRUE>>=
+@
+
+\subsection*{\texttt{01\_eda.R}: análisis exploratorio}
+<<ap_eda, ref.label=c("eda_lectura", "eda_resumen", "eda_cajas", "eda_pairs"), echo=TRUE, fig.show="hide">>=
+@
+
+\subsection*{\texttt{02\_kmedias.R}: dendrogramas y $k$-medias}
+<<ap_km, ref.label=c("km_escala", "km_dendros", "km_dendros_fig", "km_criterios", "km_criterios_fig", "km_ajuste", "km_k3"), echo=TRUE, fig.show="hide">>=
+@
+
+\subsection*{\texttt{03\_mixturas.R}: mixtura de densidades}
+<<ap_mc, ref.label=c("mc_bic", "mc_ajuste", "mc_comparacion", "mc_fig"), echo=TRUE, fig.show="hide">>=
+@
+
+\subsection*{\texttt{04\_mds.R}: escalamiento multidimensional}
+<<ap_mds, ref.label=c("mds_ajuste", "mds_fig"), echo=TRUE, fig.show="hide">>=
 @
 
 \end{document}

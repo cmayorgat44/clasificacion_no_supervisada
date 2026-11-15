@@ -9,8 +9,9 @@ case "$f" in
     out=$(Rscript -e 'invisible(parse(commandArgs(TRUE)[1]))' "$f" 2>&1) ;;
   *.Rnw)
     # Extrae el código entre "<<...>>=" y "@" y lo parsea (sin evaluar nada).
+    # Las referencias "<<etiqueta>>" dentro de un chunk son válidas en knitr: se omiten.
     out=$(Rscript -e 'l <- readLines(commandArgs(TRUE)[1]); dentro <- FALSE; cod <- character()
-      for (x in l) { if (grepl("^<<.*>>=", x)) dentro <- TRUE else if (grepl("^@", x)) dentro <- FALSE else if (dentro) cod <- c(cod, x) }
+      for (x in l) { if (grepl("^<<.*>>=", x)) dentro <- TRUE else if (grepl("^@", x)) dentro <- FALSE else if (dentro && !grepl("^[[:space:]]*<<[^>]*>>[[:space:]]*$", x)) cod <- c(cod, x) }
       invisible(parse(text = cod))' "$f" 2>&1) ;;
   *)
     exit 0 ;;
