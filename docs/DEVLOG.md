@@ -2,6 +2,28 @@
 
 Una entrada por sesión, la más reciente arriba. Formato en la skill `/cierre`.
 
+## 2026-11-15 — Sesión 3: correcciones del revisor
+
+**Objetivo:** aplicar el dictamen del revisor ("casi listo") antes de entregar.
+
+**Hecho:**
+- Se corrió el revisor con las instrucciones de `revisor-reporte` (vía un agente general, porque los agentes del proyecto se cargan al reiniciar la sesión).
+- Se verificaron en R todos los números nuevos antes de citarlos.
+- Correcciones de contenido:
+  - "Misma altura" pasa a "alturas parecidas". Los grupos difieren 1.9 cm (p = 0.045) por los tres B altos mal clasificados; entre países, la altura sí es igual.
+  - Silueta: se admite que k = 2 es la más baja (0.276) y que k se elige por interpretación.
+  - "La mixtura no depende de la escala" ahora dice que solo aplica a covarianzas completas (EEE); con datos escalados, Mclust elige VII y da otra partición.
+  - Mal clasificados (B.2, B.20, B.8): lo que comparten es ser altos (≥ 43.2 cm, sobre la mediana de B de 41.3); B.20 cayó en el grupo 2 por su peso *y* su altura.
+  - La correlación peso-tamaño en la muestra completa se describe como "débil o incluso invertida".
+- Claridad: BIC (mayor es mejor), qué mide el ARI, qué significa λ y la equivalencia con componentes principales, supuesto de normalidad, pie completo de la Fig. 5, composición de Ward en el texto y dendrogramas más legibles.
+- `01_eda.R`: comentario corregido; ahora se imprime `error_sin_header`. `02_kmedias.R`: agrega `p_altura_km`, `sil_grupo`, `mediana_F1_B` y `tab_ward_pais`.
+
+**Resultados clave:** cuerpo de **8 páginas** (justo el límite) y 16 en total; sin código en el cuerpo ni referencias rotas; símbolos de la Fig. 5 verificados con zoom.
+
+**Pendiente / bloqueos:** lectura final de Carlos; fecha de entrega.
+
+**Siguiente paso:** que Carlos lea el PDF y lo envíe a jacob.cancino@anahuac.mx cuando se defina la fecha.
+
 ## 2026-11-15 — Sesión 2: resolución completa del proyecto
 
 **Objetivo:** resolver los 4 puntos de `pr_CA.pdf` y redactar el reporte.

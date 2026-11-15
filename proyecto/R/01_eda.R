@@ -5,10 +5,11 @@
 source("proyecto/R/00_setup.R")
 
 ## ---- eda_lectura ----
-# Sin header = TRUE explícito la lectura falla; omitiéndolo, read.table lo
-# detecta porque la primera línea tiene un campo menos que las demás.
+# Con header = FALSE la lectura falla; si se omite el argumento, read.table
+# lo detecta porque la primera línea tiene un campo menos que las demás.
 x_sin <- try(read.table("data/Foxes.txt", header = FALSE), silent = TRUE)
 error_sin_header <- conditionMessage(attr(x_sin, "condition"))
+error_sin_header
 dim(X)
 head(X)
 

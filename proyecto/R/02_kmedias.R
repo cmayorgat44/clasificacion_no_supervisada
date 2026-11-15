@@ -22,7 +22,7 @@ lapply(hc, function(h) table(grupo = cutree(h, 2), pais))
 op <- par(mfrow = c(2, 2), mar = c(1, 4, 2, 0.5))
 for (nm in names(hc)) {
   # Las hojas muestran el país (B/U) para poder leerlas en el reporte
-  plot(hc[[nm]], hang = -1, cex = 0.7, main = nm, xlab = "", sub = "",
+  plot(hc[[nm]], hang = -1, cex = 0.85, main = nm, xlab = "", sub = "",
        ylab = "Altura", las = 1, labels = as.character(pais))
   if (nm == "Ward") rect.hclust(hc[[nm]], k = 2, border = "grey40")
 }
@@ -60,11 +60,26 @@ medias_km <- sapply(split(X, grupo_km), colMeans)
 round(medias_km, 2)
 round(c(BSS_TSS = km$betweenss / km$totss), 3)
 
+# La altura difiere poco entre grupos, pero no es igual
+p_altura_km <- t.test(X$F1 ~ grupo_km)$p.value
+round(p_altura_km, 3)
+
+# Silueta promedio de cada grupo
+sil_grupo <- summary(silhouette(km$cluster, dist(Xs)))$clus.avg.widths
+round(sil_grupo, 3)
+
 # Comparación con el país (no se usó para ajustar)
 tab_km_pais <- table(grupo = grupo_km, pais)
 tab_km_pais
 mal_km <- rownames(X)[grupo_km != ifelse(pais == "B", 1, 2)]
-mal_km
+X[mal_km, ]
+# Los tres son más altos que el zorro típico de B
+mediana_F1_B <- median(X$F1[pais == "B"])
+mediana_F1_B
+
+# Composición de los dos grupos de Ward
+tab_ward_pais <- table(ward = cutree(hc$Ward, 2), pais)
+tab_ward_pais
 
 # Ward con k = 2 contra k-medias
 table(ward = cutree(hc$Ward, 2), kmedias = grupo_km)

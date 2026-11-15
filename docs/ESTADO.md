@@ -35,10 +35,10 @@ Leyenda: ⬜ pendiente · 🟨 en progreso · ✅ hecho
 ## Reporte (`reporte/reporte_zorros.Rnw`)
 - ✅ Redacción de todas las secciones para un experto en zorros
 - ✅ 6 figuras y 3 tablas, todas citadas en el texto
-- ✅ Cuerpo de 7 páginas carta, 11 pt, sin código (verificado con el .aux y pdftotext)
+- ✅ Cuerpo de 8 páginas carta (justo el límite), 11 pt, sin código (verificado con el .aux y pdftotext)
 - ✅ Apéndice con código y salida de consola (vía `ref.label`)
 - ⬜ Lectura y visto bueno de Carlos
-- ⬜ Revisión con el subagente `revisor-reporte`
+- ✅ Revisión con el subagente `revisor-reporte` ("casi listo") y correcciones aplicadas
 
 ## Entrega
 - 🟨 PDF final: `proyecto/reporte/reporte_zorros.pdf` (pendiente de visto bueno)
