@@ -1,6 +1,25 @@
 # Dev log
 
 Una entrada por sesión, la más reciente arriba. Formato en la skill `/cierre`.
+Las sesiones 1–4 las hizo Carlos Mayorga con Claude Code; desde la 5 cada entrada lleva su autor.
+
+## 2026-11-15 — Sesión 4: traspaso al equipo
+
+**Autor:** Carlos Mayorga (con Claude Code)
+
+**Objetivo:** dejar el repo listo para que los compañeros de equipo y sus agentes continúen.
+
+**Hecho:**
+- `README.md` para personas: estado, resultados, estructura, cómo correr y flujo de equipo.
+- `AGENTS.md` para agentes que no son Claude Code: apunta a `CLAUDE.md` y explica cómo reemplazar a mano hooks y skills.
+- `CLAUDE.md` reescrito para el equipo: lectura obligatoria al iniciar, `git pull`/push, identidad de git propia, el cuerpo ya ocupa 8 páginas y nada de números escritos a mano.
+- Skills y revisor ya no hablan de "Carlos" sino de "la persona"; `/cierre` pide autor y numeración global de sesiones; `compilar-reporte` ya no asume rutas de una Mac concreta.
+- Hook `exigir_devlog.sh`: ahora solo cuenta archivos con cambios sin commit (git). Antes, un clon recién hecho podía bloquear por las fechas de los archivos. Probado en limpio, con cambios y en un clon fresco.
+- Prueba de extremo a extremo en un clon fresco: hook de inicio, los 4 scripts y la compilación del reporte.
+
+**Pendiente / bloqueos:** dar acceso al repo a los compañeros; agregar sus nombres e IDs al reporte; lectura final; fecha de entrega.
+
+**Siguiente paso:** el equipo lee el PDF y agrega sus nombres en la portada y el encabezado del `.Rnw` (cuidando el límite de 8 páginas).
 
 ## 2026-11-15 — Sesión 3: correcciones del revisor
 

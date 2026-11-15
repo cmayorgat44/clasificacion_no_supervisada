@@ -1,6 +1,6 @@
 ---
 name: revisor-reporte
-description: Revisor de solo lectura del reporte final de zorros. Lee el PDF compilado y el .Rnw, y los evalúa contra la rúbrica de proyecto/pr_CA.pdf desde la perspectiva de un experto en zorros con estadística básica. Usar solo cuando Carlos pida revisar el reporte.
+description: Revisor de solo lectura del reporte final de zorros. Lee el PDF compilado y el .Rnw, y los evalúa contra la rúbrica de proyecto/pr_CA.pdf desde la perspectiva de un experto en zorros con estadística básica. Usar solo cuando la persona pida revisar el reporte.
 tools: Read, Grep, Glob, Bash
 ---
 

@@ -5,7 +5,8 @@ description: Compila proyecto/reporte/reporte_zorros.Rnw a PDF con knitr + TinyT
 
 # Compilar el reporte
 
-`pdflatex` **no** está en el PATH; TinyTeX está en `~/Library/TinyTeX` y `tinytex::latexmk()` lo encuentra solo.
+Usa `tinytex::latexmk()`: encuentra TinyTeX aunque `pdflatex` no esté en el PATH. Si no hay LaTeX instalado,
+corre una vez `Rscript -e 'tinytex::install_tinytex()'`.
 
 ## 1. Compilar
 Desde la raíz del repo:
@@ -21,7 +22,7 @@ cd proyecto/reporte
 pdfinfo reporte_zorros.pdf | grep -E 'Pages|Page size'      # carta = 612 x 792 pts
 grep 'newlabel{fin-reporte}' reporte_zorros.aux             # el 2.º {} es la página donde acaba el cuerpo
 ```
-- **Páginas del cuerpo ≤ 8** (la etiqueta `fin-reporte` está justo antes del apéndice). Si se pasa, propone qué recortar.
+- **Páginas del cuerpo ≤ 8** (la etiqueta `fin-reporte` está justo antes del apéndice). **Hoy ya ocupa 8**: si se pasa, propone qué recortar.
 - **Sin código en el cuerpo**: en el `.Rnw`, todo chunk antes de `\label{fin-reporte}` debe tener `echo=FALSE`
   (o heredar el default del setup) y no imprimir salida de consola (`results='hide'` o `include=FALSE`,
   salvo tablas formateadas con `kable`/`xtable`).

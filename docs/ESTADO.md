@@ -7,6 +7,7 @@ Leyenda: ⬜ pendiente · 🟨 en progreso · ✅ hecho
 - ✅ Repo git, `CLAUDE.md`, hooks, skills y subagente revisor
 - ✅ `proyecto/R/00_setup.R` (lectura de datos, paquetes, semilla, colores U/B)
 - ✅ Remoto en GitHub (`cmayorgat44/clasificacion_no_supervisada`, rama `main`)
+- ✅ README, AGENTS.md y CLAUDE.md preparados para que el equipo continúe
 
 ## 1. Análisis exploratorio (`R/01_eda.R`)
 - ✅ Responder: ¿por qué hace falta `header = TRUE`? (verificado en R)
@@ -37,12 +38,16 @@ Leyenda: ⬜ pendiente · 🟨 en progreso · ✅ hecho
 - ✅ 6 figuras y 3 tablas, todas citadas en el texto
 - ✅ Cuerpo de 8 páginas carta (justo el límite), 11 pt, sin código (verificado con el .aux y pdftotext)
 - ✅ Apéndice con código y salida de consola (vía `ref.label`)
-- ⬜ Lectura y visto bueno de Carlos
+- ⬜ Lectura final y visto bueno del equipo
 - ✅ Revisión con el subagente `revisor-reporte` ("casi listo") y correcciones aplicadas
 
 ## Entrega
 - 🟨 PDF final: `proyecto/reporte/reporte_zorros.pdf` (pendiente de visto bueno)
 - ⬜ Envío a jacob.cancino@anahuac.mx (fecha por confirmar)
+
+## Pendientes del equipo
+- ⬜ Dar acceso al repo a los compañeros (colaboradores en GitHub)
+- ⬜ Agregar los nombres e IDs de los integrantes en la portada y el encabezado del reporte (hoy solo aparece Carlos)
 
 ## Bloqueos / dudas para el profe
 - La fecha de entrega aún no se define.
