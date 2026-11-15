@@ -1,0 +1,94 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=2.3cm,headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\contentsname}{Contenido}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{MAT5519 Clasificación no Supervisada}
+\rhead{C. G. Mayorga Tapia (00294506)}
+\cfoot{\thepage}
+
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+<<setup, include=FALSE>>=
+# El cuerpo del reporte no muestra código (echo = FALSE); el apéndice sí.
+knitr::opts_chunk$set(echo = FALSE, comment = NA, size = "small",
+                      fig.align = "center", fig.pos = "H",
+                      message = FALSE, warning = FALSE, tidy = FALSE)
+knitr::opts_knit$set(root.dir = normalizePath("../.."))
+options(width = 80)
+@
+
+<<cargar_scripts, include=FALSE>>=
+# root.dir ya es la raíz del repo. Agregar aquí cada script nuevo de proyecto/R/.
+scripts <- c("proyecto/R/00_setup.R")
+for (s in scripts) knitr::read_chunk(s)
+@
+
+<<setup_paquetes, include=FALSE>>=
+@
+<<setup_datos, include=FALSE>>=
+@
+<<setup_colores, include=FALSE>>=
+@
+
+\begin{center}
+{\Large\bfseries Análisis de clusters de zorros rojos}\\[4pt]
+Trabajo Final\\
+MAT5519 (10160) Clasificación no Supervisada\\
+Septiembre--Diciembre 2026\\[10pt]
+\textbf{Carlos Guillermo Mayorga Tapia}\\
+ID: 00294506
+\end{center}
+
+\vspace{6pt}
+\hrule
+
+%=====================================================================
+\section{Introducción}
+
+%=====================================================================
+\section{Análisis exploratorio}
+
+%=====================================================================
+\section{Número de grupos y $k$-medias}
+
+%=====================================================================
+\section{Modelo de mixtura de densidades}
+
+%=====================================================================
+\section{Escalamiento multidimensional}
+
+%=====================================================================
+\section{Conclusiones}
+
+% Marca el fin del cuerpo: la skill compilar-reporte la usa para contar las 8 páginas.
+\label{fin-reporte}
+
+%=====================================================================
+\clearpage
+\appendix
+\section{Código de R}
+
+Todo el código está en \texttt{proyecto/R/} y se corre desde la raíz del repositorio.
+
+\subsection*{\texttt{00\_setup.R}}
+<<ap_setup, eval=FALSE, echo=TRUE, code=readLines("proyecto/R/00_setup.R")>>=
+@
+
+\end{document}

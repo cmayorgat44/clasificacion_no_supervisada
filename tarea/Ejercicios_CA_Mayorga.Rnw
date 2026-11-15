@@ -1,0 +1,649 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.3cm,headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\contentsname}{Contenido}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{MAT5519 Clasificación no Supervisada}
+\rhead{C. G. Mayorga Tapia (00294506)}
+\cfoot{\thepage}
+
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+<<setup, include=FALSE>>=
+knitr::opts_chunk$set(echo = TRUE, comment = NA, size = "small",
+                      fig.align = "center", fig.pos = "H",
+                      message = FALSE, warning = FALSE, tidy = FALSE)
+options(width = 80)
+@
+
+\begin{center}
+{\Large\bfseries Ejercicios de Análisis de Clusters}\\[4pt]
+MAT5519 (10160) Clasificación no Supervisada\\
+Septiembre--Diciembre 2026\\[10pt]
+\textbf{Carlos Guillermo Mayorga Tapia}\\
+ID: 00294506\\[4pt]
+12 de noviembre de 2026
+\end{center}
+
+\vspace{6pt}
+\hrule
+
+%=====================================================================
+\section{Distancias}
+\subsection{Distancias y desigualdad triangular}
+
+En todo el ejercicio uso $\norm{u}_q = \left(\sum_{i=1}^p |u_i|^q\right)^{1/q}$ y quiero ver que
+\[
+\norm{x-y}_q \le \norm{x-z}_q + \norm{z-y}_q .
+\]
+
+%---------------------------------------------------------------------
+\subsubsection*{(a) Caso de una dimensión}
+
+Quiero probar $|a-b| \le |a-c| + |c-b|$ para $a,b,c\in\mathbb{R}$.
+
+\textbf{Simplificación.} Si intercambio $a$ y $b$, el lado izquierdo queda $|b-a| = |a-b|$ y el lado derecho queda $|b-c|+|c-a| = |c-b| + |a-c|$, que es lo mismo. Entonces basta revisar el caso $a \le b$, donde $|a-b| = b-a$.
+
+Con $a\le b$, el punto $c$ solo puede estar en tres lugares:
+
+\textbf{Caso 1: $c$ está entre $a$ y $b$, es decir $a \le c \le b$.}
+\begin{align*}
+a - c \le 0 &\;\Rightarrow\; |a-c| = c-a,\\
+c - b \le 0 &\;\Rightarrow\; |c-b| = b-c,\\
+|a-c| + |c-b| &= (c-a) + (b-c)\\
+&= b - a\\
+&= |a-b|.
+\end{align*}
+Aquí se cumple con igualdad.
+
+\textbf{Caso 2: $c$ está a la izquierda, $c < a \le b$.}
+\begin{align*}
+a - c > 0 &\;\Rightarrow\; |a-c| = a-c,\\
+c - b < 0 &\;\Rightarrow\; |c-b| = b-c,\\
+|a-c| + |c-b| &= (a-c) + (b-c)\\
+&= a + b - 2c\\
+&= (b-a) + 2a - 2c\\
+&= (b-a) + 2(a-c).
+\end{align*}
+Como $a - c > 0$, entonces $2(a-c) > 0$ y
+\[
+|a-c| + |c-b| = (b-a) + 2(a-c) > b-a = |a-b|.
+\]
+
+\textbf{Caso 3: $c$ está a la derecha, $a \le b < c$.}
+\begin{align*}
+a - c < 0 &\;\Rightarrow\; |a-c| = c-a,\\
+c - b > 0 &\;\Rightarrow\; |c-b| = c-b,\\
+|a-c| + |c-b| &= (c-a) + (c-b)\\
+&= 2c - a - b\\
+&= (b-a) + 2c - 2b\\
+&= (b-a) + 2(c-b).
+\end{align*}
+Como $c - b > 0$, entonces $2(c-b)>0$ y
+\[
+|a-c| + |c-b| = (b-a) + 2(c-b) > b-a = |a-b|.
+\]
+
+En los tres casos $|a-b| \le |a-c| + |c-b|$. \hfill$\square$
+
+\textbf{Consecuencia para $p=1$.} Si $p=1$, el vector $u$ es un solo número y
+\[
+\norm{u}_q = \left(|u|^q\right)^{1/q} = |u|^{q\cdot \frac{1}{q}} = |u|,
+\]
+lo cual vale para cualquier $q>0$ porque $|u|\ge 0$. Entonces
+\[
+\norm{x-y}_q = |x-y|,\qquad \norm{x-z}_q = |x-z|,\qquad \norm{z-y}_q = |z-y|,
+\]
+y la desigualdad (1.1) se vuelve exactamente (1.2) con $a=x$, $b=y$, $c=z$. Por lo tanto (1.1) se cumple en $p=1$ para toda $q>0$ (incluso para $q<1$).
+
+%---------------------------------------------------------------------
+\subsubsection*{(b) Caso $q=1$ (Manhattan)}
+
+Para cada coordenada $i = 1,\dots,p$ uso (1.2) con $a=x_i$, $b=y_i$, $c=z_i$:
+\[
+|x_i - y_i| \le |x_i - z_i| + |z_i - y_i|, \qquad i = 1,\dots,p.
+\]
+Sumo las $p$ desigualdades (al sumar desigualdades del mismo sentido, el sentido se mantiene):
+\begin{align*}
+\norm{x-y}_1 &= \sum_{i=1}^p |x_i - y_i|\\
+&\le \sum_{i=1}^p \big(|x_i - z_i| + |z_i - y_i|\big)\\
+&= \sum_{i=1}^p |x_i - z_i| + \sum_{i=1}^p |z_i - y_i|\\
+&= \norm{x-z}_1 + \norm{z-y}_1. \hspace{6cm}\square
+\end{align*}
+
+%---------------------------------------------------------------------
+\subsubsection*{(c) Caso $q=2$ (euclidiana)}
+
+Tomo $u = x - z$ y $v = z - y$. Entonces
+\[
+u + v = (x - z) + (z - y) = x - y,
+\]
+y lo que quiero probar es $\norm{u+v}_2 \le \norm{u}_2 + \norm{v}_2$. Trabajo con el cuadrado para quitar la raíz:
+\begin{align*}
+\norm{u+v}_2^2 &= \sum_{i=1}^p (u_i + v_i)^2\\
+&= \sum_{i=1}^p \left(u_i^2 + 2u_iv_i + v_i^2\right)\\
+&= \sum_{i=1}^p u_i^2 + 2\sum_{i=1}^p u_iv_i + \sum_{i=1}^p v_i^2\\
+&= \norm{u}_2^2 + 2\sum_{i=1}^p u_iv_i + \norm{v}_2^2\\
+&\le \norm{u}_2^2 + 2\norm{u}_2\norm{v}_2 + \norm{v}_2^2 \qquad \text{(Cauchy-Schwarz)}\\
+&= \left(\norm{u}_2 + \norm{v}_2\right)^2.
+\end{align*}
+Los dos lados son no negativos y la raíz cuadrada es creciente en $[0,\infty)$, así que puedo sacar raíz sin cambiar el sentido:
+\[
+\norm{u+v}_2 \le \norm{u}_2 + \norm{v}_2
+\quad\Longrightarrow\quad
+\norm{x-y}_2 \le \norm{x-z}_2 + \norm{z-y}_2. \hspace{2cm}\square
+\]
+
+%---------------------------------------------------------------------
+\subsubsection*{(d) Caso $q=\infty$ (máxima distancia)}
+
+Fijo cualquier coordenada $i$. Por (1.2):
+\[
+|x_i - y_i| \le |x_i - z_i| + |z_i - y_i|.
+\]
+El máximo de una lista es mayor o igual que cualquier elemento de la lista, por eso
+\[
+|x_i - z_i| \le \max_{j} |x_j - z_j| = \norm{x-z}_\infty,
+\qquad
+|z_i - y_i| \le \max_{j} |z_j - y_j| = \norm{z-y}_\infty.
+\]
+Juntando:
+\[
+|x_i - y_i| \le \norm{x-z}_\infty + \norm{z-y}_\infty \qquad \text{para toda } i = 1,\dots,p.
+\]
+El lado derecho no depende de $i$, es una cota que sirve para todas las coordenadas. En particular sirve para la coordenada donde $|x_i - y_i|$ es más grande:
+\[
+\norm{x-y}_\infty = \max_{i} |x_i - y_i| \le \norm{x-z}_\infty + \norm{z-y}_\infty. \hspace{3cm}\square
+\]
+
+%---------------------------------------------------------------------
+\subsubsection*{(e) Contraejemplo con $q = 1/2$ y $p = 2$}
+
+Con $q = 1/2$:
+\[
+\norm{u}_{1/2} = \left(|u_1|^{1/2} + |u_2|^{1/2}\right)^{2} = \left(\sqrt{|u_1|} + \sqrt{|u_2|}\right)^{2}.
+\]
+Tomo los puntos
+\[
+x = (0,0), \qquad y = (1,1), \qquad z = (1,0).
+\]
+
+\textbf{Lado izquierdo.}
+\[
+x - y = (0-1,\;0-1) = (-1,-1),\qquad
+\norm{x-y}_{1/2} = \left(\sqrt{1} + \sqrt{1}\right)^2 = (1+1)^2 = 2^2 = 4.
+\]
+
+\textbf{Lado derecho.}
+\begin{align*}
+x - z &= (0-1,\;0-0) = (-1,0), & \norm{x-z}_{1/2} &= \left(\sqrt{1} + \sqrt{0}\right)^2 = (1+0)^2 = 1,\\
+z - y &= (1-1,\;0-1) = (0,-1), & \norm{z-y}_{1/2} &= \left(\sqrt{0} + \sqrt{1}\right)^2 = (0+1)^2 = 1.
+\end{align*}
+Entonces
+\[
+\norm{x-z}_{1/2} + \norm{z-y}_{1/2} = 1 + 1 = 2 .
+\]
+Para que se cumpliera la desigualdad necesitaría $4 \le 2$, lo cual es falso. Por lo tanto la desigualdad triangular no se cumple con $q=1/2$: ir de $x$ a $y$ ``directo'' sale más caro que pasar por $z$.
+
+Lo confirmo rápido en R:
+
+<<lq>>=
+lq <- function(u, q) sum(abs(u)^q)^(1/q)
+x <- c(0, 0); y <- c(1, 1); z <- c(1, 0)
+c(izq = lq(x - y, 1/2), der = lq(x - z, 1/2) + lq(z - y, 1/2))
+@
+
+%=====================================================================
+\section{Análisis de Clusters}
+\subsection{Análisis de clustering jerárquico}
+
+Numero las filas de $X$ como puntos:
+\[
+P_1 = (-1,1),\quad P_2 = (-1,-1),\quad P_3 = (0,0),\quad P_4 = (1.3,0),\quad P_5 = (2.3,0).
+\]
+Uso $d(P_r,P_s) = \sqrt{(x_{r1}-x_{s1})^2 + (x_{r2}-x_{s2})^2}$ y redondeo a 3 decimales, que es suficiente para comparar.
+
+%---------------------------------------------------------------------
+\subsubsection*{(a) Matriz de distancias euclidianas}
+
+\begin{align*}
+d_{12} &= \sqrt{(-1-(-1))^2 + (1-(-1))^2} = \sqrt{0^2 + 2^2} = \sqrt{4} = 2.000\\
+d_{13} &= \sqrt{(-1-0)^2 + (1-0)^2} = \sqrt{1 + 1} = \sqrt{2} \approx 1.414\\
+d_{14} &= \sqrt{(-1-1.3)^2 + (1-0)^2} = \sqrt{(-2.3)^2 + 1^2} = \sqrt{5.29 + 1} = \sqrt{6.29} \approx 2.508\\
+d_{15} &= \sqrt{(-1-2.3)^2 + (1-0)^2} = \sqrt{(-3.3)^2 + 1^2} = \sqrt{10.89 + 1} = \sqrt{11.89} \approx 3.448\\
+d_{23} &= \sqrt{(-1-0)^2 + (-1-0)^2} = \sqrt{1 + 1} = \sqrt{2} \approx 1.414\\
+d_{24} &= \sqrt{(-1-1.3)^2 + (-1-0)^2} = \sqrt{5.29 + 1} = \sqrt{6.29} \approx 2.508\\
+d_{25} &= \sqrt{(-1-2.3)^2 + (-1-0)^2} = \sqrt{10.89 + 1} = \sqrt{11.89} \approx 3.448\\
+d_{34} &= \sqrt{(0-1.3)^2 + (0-0)^2} = \sqrt{1.69} = 1.300\\
+d_{35} &= \sqrt{(0-2.3)^2 + (0-0)^2} = \sqrt{5.29} = 2.300\\
+d_{45} &= \sqrt{(1.3-2.3)^2 + (0-0)^2} = \sqrt{1} = 1.000
+\end{align*}
+
+La matriz es simétrica con ceros en la diagonal, así que solo escribo la parte de abajo:
+\[
+D = \begin{array}{c|ccccc}
+ & P_1 & P_2 & P_3 & P_4 & P_5\\ \hline
+P_1 & 0 & & & & \\
+P_2 & 2.000 & 0 & & & \\
+P_3 & 1.414 & 1.414 & 0 & & \\
+P_4 & 2.508 & 2.508 & 1.300 & 0 & \\
+P_5 & 3.448 & 3.448 & 2.300 & 1.000 & 0
+\end{array}
+\]
+
+Algo que se ve desde aquí: $P_1$ y $P_2$ son espejo uno del otro respecto al eje horizontal, por eso $d_{13}=d_{23}$, $d_{14}=d_{24}$ y $d_{15}=d_{25}$.
+
+%---------------------------------------------------------------------
+\subsubsection*{(b) Clustering jerárquico}
+
+En cada paso uno el par de grupos más cercano y actualizo las distancias del grupo nuevo $A\cup B$ contra cualquier otro grupo $C$ con:
+\[
+\text{Simple: } d(A\cup B, C) = \min\{d(A,C),\, d(B,C)\},
+\qquad
+\text{Completo: } d(A\cup B, C) = \max\{d(A,C),\, d(B,C)\}.
+\]
+
+\paragraph{Aglomeramiento simple.}
+
+\textbf{Paso 1.} El mínimo de $D$ es $d_{45} = 1.000$. Uno $\{P_4,P_5\}$ a altura $1.000$. Actualizo:
+\begin{align*}
+d(\{4,5\}, 1) &= \min\{d_{14}, d_{15}\} = \min\{2.508,\, 3.448\} = 2.508\\
+d(\{4,5\}, 2) &= \min\{d_{24}, d_{25}\} = \min\{2.508,\, 3.448\} = 2.508\\
+d(\{4,5\}, 3) &= \min\{d_{34}, d_{35}\} = \min\{1.300,\, 2.300\} = 1.300
+\end{align*}
+\[
+\begin{array}{c|cccc}
+ & P_1 & P_2 & P_3 & \{4,5\}\\ \hline
+P_1 & 0 & & & \\
+P_2 & 2.000 & 0 & & \\
+P_3 & 1.414 & 1.414 & 0 & \\
+\{4,5\} & 2.508 & 2.508 & \mathbf{1.300} & 0
+\end{array}
+\]
+
+\textbf{Paso 2.} El mínimo es $1.300$ entre $P_3$ y $\{4,5\}$. Uno $\{P_3,P_4,P_5\}$ a altura $1.300$. Actualizo:
+\begin{align*}
+d(\{3,4,5\}, 1) &= \min\{d_{13},\, d(\{4,5\},1)\} = \min\{1.414,\, 2.508\} = 1.414\\
+d(\{3,4,5\}, 2) &= \min\{d_{23},\, d(\{4,5\},2)\} = \min\{1.414,\, 2.508\} = 1.414
+\end{align*}
+\[
+\begin{array}{c|ccc}
+ & P_1 & P_2 & \{3,4,5\}\\ \hline
+P_1 & 0 & & \\
+P_2 & 2.000 & 0 & \\
+\{3,4,5\} & \mathbf{1.414} & \mathbf{1.414} & 0
+\end{array}
+\]
+
+\textbf{Paso 3.} Hay empate en el mínimo: $d(\{3,4,5\},1) = d(\{3,4,5\},2) = 1.414$. Escojo el primero (igual que hace R, que toma el primero que encuentra). Uno $\{P_1,P_3,P_4,P_5\}$ a altura $1.414$. Actualizo:
+\[
+d(\{1,3,4,5\}, 2) = \min\{d_{12},\, d(\{3,4,5\},2)\} = \min\{2.000,\, 1.414\} = 1.414
+\]
+
+\textbf{Paso 4.} Solo queda unir $P_2$ al resto a altura $1.414$.
+
+\paragraph{Aglomeramiento completo.}
+
+\textbf{Paso 1.} El mínimo de $D$ sigue siendo $d_{45} = 1.000$. Uno $\{P_4,P_5\}$ a altura $1.000$. Ahora actualizo con el máximo:
+\begin{align*}
+d(\{4,5\}, 1) &= \max\{d_{14}, d_{15}\} = \max\{2.508,\, 3.448\} = 3.448\\
+d(\{4,5\}, 2) &= \max\{d_{24}, d_{25}\} = \max\{2.508,\, 3.448\} = 3.448\\
+d(\{4,5\}, 3) &= \max\{d_{34}, d_{35}\} = \max\{1.300,\, 2.300\} = 2.300
+\end{align*}
+\[
+\begin{array}{c|cccc}
+ & P_1 & P_2 & P_3 & \{4,5\}\\ \hline
+P_1 & 0 & & & \\
+P_2 & 2.000 & 0 & & \\
+P_3 & \mathbf{1.414} & \mathbf{1.414} & 0 & \\
+\{4,5\} & 3.448 & 3.448 & 2.300 & 0
+\end{array}
+\]
+
+\textbf{Paso 2.} Hay empate en el mínimo: $d_{13} = d_{23} = 1.414$. Escojo $(P_1,P_3)$ (otra vez el primero). Uno $\{P_1,P_3\}$ a altura $1.414$. Actualizo:
+\begin{align*}
+d(\{1,3\}, 2) &= \max\{d_{12},\, d_{23}\} = \max\{2.000,\, 1.414\} = 2.000\\
+d(\{1,3\}, \{4,5\}) &= \max\{d(1,\{4,5\}),\, d(3,\{4,5\})\} = \max\{3.448,\, 2.300\} = 3.448
+\end{align*}
+\[
+\begin{array}{c|ccc}
+ & \{1,3\} & P_2 & \{4,5\}\\ \hline
+\{1,3\} & 0 & & \\
+P_2 & \mathbf{2.000} & 0 & \\
+\{4,5\} & 3.448 & 3.448 & 0
+\end{array}
+\]
+
+\textbf{Paso 3.} El mínimo es $2.000$. Uno $\{P_1,P_2,P_3\}$ a altura $2.000$. Actualizo:
+\[
+d(\{1,2,3\}, \{4,5\}) = \max\{d(\{1,3\},\{4,5\}),\, d(2,\{4,5\})\} = \max\{3.448,\, 3.448\} = 3.448
+\]
+
+\textbf{Paso 4.} Uno los dos grupos que quedan a altura $3.448$.
+
+\paragraph{Resumen.}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{c ll ll}
+\toprule
+ & \multicolumn{2}{c}{Simple} & \multicolumn{2}{c}{Completo}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Paso & Unión & Altura & Unión & Altura\\
+\midrule
+1 & $\{4\}+\{5\}$ & 1.000 & $\{4\}+\{5\}$ & 1.000\\
+2 & $\{3\}+\{4,5\}$ & 1.300 & $\{1\}+\{3\}$ & 1.414\\
+3 & $\{1\}+\{3,4,5\}$ & 1.414 & $\{2\}+\{1,3\}$ & 2.000\\
+4 & $\{2\}+\{1,3,4,5\}$ & 1.414 & $\{1,2,3\}+\{4,5\}$ & 3.448\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%---------------------------------------------------------------------
+\subsubsection*{(c) Ambigüedad por empates}
+
+Los empates salen de la simetría de $P_1$ y $P_2$ respecto al eje horizontal.
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Simple (paso 3).} $P_1$ y $P_2$ están a la misma distancia $1.414$ de $\{3,4,5\}$. Si se une primero $P_1$, la distancia de $P_2$ al grupo nuevo sigue siendo $\min\{2.000, 1.414\}=1.414$, y viceversa. Entonces las dos opciones dan las mismas alturas y el mismo árbol final; solo cambia el orden. La ambigüedad sí aparece si corto en $k=2$: dependiendo de cuál se unió primero, el grupo solo es $\{P_2\}$ o $\{P_1\}$, y no hay ninguna razón en los datos para preferir uno.
+\item \textbf{Completo (paso 2).} $d_{13} = d_{23} = 1.414$. Si escojo $(P_2,P_3)$ en lugar de $(P_1,P_3)$:
+\begin{align*}
+d(\{2,3\}, 1) &= \max\{d_{12},\, d_{13}\} = \max\{2.000,\, 1.414\} = 2.000,\\
+d(\{2,3\}, \{4,5\}) &= \max\{3.448,\, 2.300\} = 3.448,
+\end{align*}
+y el resto sigue igual con las mismas alturas ($2.000$ y $3.448$). Lo que cambia es con quién queda $P_3$ si corto en $k=3$: $\{P_1,P_3\},\{P_2\},\{P_4,P_5\}$ o bien $\{P_2,P_3\},\{P_1\},\{P_4,P_5\}$. En $k=2$ no hay problema, siempre sale $\{P_1,P_2,P_3\}$ y $\{P_4,P_5\}$.
+\end{itemize}
+
+En general, cuando hay empates el resultado depende de una regla arbitraria (en R, del orden de las filas), y conviene revisar si ese empate cambia la interpretación o no.
+
+%---------------------------------------------------------------------
+\subsubsection*{(d) Diferencias entre los dos métodos}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{c l l}
+\toprule
+$k$ & Simple & Completo\\
+\midrule
+2 & $\{1,3,4,5\}$, $\{2\}$ \ (o $\{2,3,4,5\}$, $\{1\}$) & $\{1,2,3\}$, $\{4,5\}$\\
+3 & $\{1\}$, $\{2\}$, $\{3,4,5\}$ & $\{1,3\}$, $\{2\}$, $\{4,5\}$ \ (o $\{2,3\}$, $\{1\}$, $\{4,5\}$)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{El punto clave es $P_3$.} Con enlace simple, $P_3$ se va con $\{4,5\}$ porque su vecino más cercano es $P_4$ (a $1.3$). Con enlace completo, se va con $P_1$ (o $P_2$) porque lo que importa es el punto más lejano del grupo: para $\{4,5\}$ ese punto es $P_5$ a $2.3$, mientras que $P_1$ está a solo $1.414$.
+\item \textbf{Efecto cadena del simple.} $P_3$, $P_4$ y $P_5$ están en línea con pasos cortos ($1.3$ y $1.0$), entonces el simple los encadena aunque los extremos $P_3$ y $P_5$ estén a $2.3$. Luego $P_1$ y $P_2$ se pegan a esa cadena a través de $P_3$, y todo termina unido a una altura muy baja ($1.414$). El dendrograma queda ``aplanado'': no hay un salto claro que sugiera cuántos grupos tomar, y $P_1$ y $P_2$ terminan viéndose como puntos sueltos.
+\item \textbf{Grupos compactos del completo.} El completo busca grupos con diámetro chico. Termina con dos grupos claros: el de la izquierda $\{1,2,3\}$ (diámetro $2.0$) y el de la derecha $\{4,5\}$ (diámetro $1.0$). Además hay un salto grande entre la altura $2.000$ y la última unión en $3.448$, lo cual apoya quedarse con $k=2$.
+\item \textbf{Conclusión.} Los dos métodos coinciden en que $\{4,5\}$ es lo más cercano, pero no en a dónde pertenece $P_3$. Para estos datos, la solución del completo (izquierda contra derecha) me parece la más razonable; el simple es más sensible a puntos intermedios que hacen de ``puente''.
+\end{itemize}
+
+%---------------------------------------------------------------------
+\subsubsection*{(e) Confirmación en R}
+
+<<hc_toy>>=
+X <- matrix(c(-1, 1,
+              -1, -1,
+               0, 0,
+             1.3, 0,
+             2.3, 0), ncol = 2, byrow = TRUE)
+D <- dist(X, method = "euclidean")
+round(D, 3)
+xs <- hclust(D, "single")
+xc <- hclust(D, "complete")
+cbind(xs$merge, altura = round(xs$height, 3))
+cbind(xc$merge, altura = round(xc$height, 3))
+cbind(single = cutree(xs, k = 2:3), complete = cutree(xc, k = 2:3))
+@
+
+En \texttt{merge} los números negativos son puntos y los positivos son grupos formados en ese paso. Las uniones y alturas son las mismas que obtuve a mano, y R resuelve los empates igual que yo (toma el primer par).
+
+<<hc_toy_plot, fig.width=8, fig.height=3.6, out.width="0.9\\textwidth", fig.cap="Dendrogramas de los 5 puntos con enlace simple y completo.">>=
+par(mfrow = c(1, 2), las = 1)
+plot(xs, hang = -1, main = "Simple", sub = "", xlab = "")
+plot(xc, hang = -1, main = "Completo", sub = "", xlab = "")
+@
+
+%=====================================================================
+\subsection{Combinación lineal de densidades}
+
+Sea $f(x) = \sum_{j=1}^c \pi_j f_j(x\mid\theta_j)$ con $\pi_j\in[0,1]$, $\sum_{j=1}^c \pi_j = 1$ y cada $f_j$ una densidad en $\mathbb{R}^p$ (en el enunciado aparece $f_i$, lo tomo como $f_j$). Para que $f$ sea densidad necesito dos cosas:
+\[
+\text{(i) } f(x) \ge 0 \ \text{ para toda } x\in\mathbb{R}^p,
+\qquad
+\text{(ii) } \int_{\mathbb{R}^p} f(x)\,dx = 1.
+\]
+
+\textbf{(i) No negativa.} Para cualquier $x$ y cualquier $j$:
+\[
+\pi_j \ge 0 \quad\text{y}\quad f_j(x\mid\theta_j) \ge 0 \;\;(\text{porque } f_j \text{ es densidad})
+\;\;\Longrightarrow\;\; \pi_j f_j(x\mid\theta_j) \ge 0.
+\]
+Una suma de términos no negativos es no negativa:
+\[
+f(x) = \sum_{j=1}^c \pi_j f_j(x\mid\theta_j) \ge 0.
+\]
+
+\textbf{(ii) Integra a uno.}
+\begin{align*}
+\int_{\mathbb{R}^p} f(x)\,dx
+&= \int_{\mathbb{R}^p} \sum_{j=1}^c \pi_j f_j(x\mid\theta_j)\,dx\\
+&= \sum_{j=1}^c \int_{\mathbb{R}^p} \pi_j f_j(x\mid\theta_j)\,dx
+&& \text{(la integral de una suma finita es la suma de integrales)}\\
+&= \sum_{j=1}^c \pi_j \int_{\mathbb{R}^p} f_j(x\mid\theta_j)\,dx
+&& (\pi_j \text{ es constante, sale de la integral})\\
+&= \sum_{j=1}^c \pi_j \cdot 1
+&& (\text{cada } f_j \text{ es densidad})\\
+&= \sum_{j=1}^c \pi_j\\
+&= 1.
+\end{align*}
+
+Como se cumplen (i) y (ii), $f(x)$ es una función de densidad $p$-dimensional. \hfill$\square$
+
+%=====================================================================
+\subsection{Técnicas de clustering: votos republicanos 1960--1976}
+
+\subsubsection*{Los datos}
+
+<<votes_read>>=
+votes <- read.table("../data/votes.txt", check.names = FALSE)
+class(votes)
+dim(votes)
+names(votes)
+head(votes)
+round(sapply(votes, summary), 2)
+round(cor(votes), 2)
+@
+
+\texttt{votes} es un \texttt{data.frame} con \Sexpr{nrow(votes)} filas y \Sexpr{ncol(votes)} columnas. Cada fila es un estado de EE.\,UU. y cada columna es el porcentaje de votos que obtuvo el candidato republicano a la presidencia en las elecciones de 1960, 1964, 1968, 1972 y 1976. Todas las variables están en la misma escala (porcentaje), así que trabajo con los datos sin estandarizar.
+
+Algunas cosas que ya se ven desde aquí:
+\begin{itemize}[leftmargin=*]
+\item 1964 tiene la mayor dispersión (va de \Sexpr{min(votes[["1964"]])}\% a \Sexpr{max(votes[["1964"]])}\%) y 1972 tiene la media más alta (\Sexpr{round(mean(votes[["1972"]]),1)}\%).
+\item 1960, 1968 y 1976 están correlacionadas positivamente entre sí ($0.85$ entre 1960 y 1968), mientras que 1964 y 1972 se correlacionan entre ellas ($0.70$) y van en sentido contrario al resto. Esto cuadra con que 1964 (Goldwater) y 1972 (McGovern) fueron años atípicos.
+\end{itemize}
+
+<<votes_box, fig.width=7, fig.height=3.5, out.width="0.75\\textwidth", fig.cap="Porcentaje de voto republicano por elección.">>=
+par(las = 1)
+boxplot(votes, ylab = "% voto republicano", xlab = "Elección", col = "grey90")
+@
+
+%---------------------------------------------------------------------
+\subsubsection*{Clustering jerárquico}
+
+Sigo lo mismo que vimos en clase con \texttt{USArrests}: distancia euclidiana y los tres tipos de aglomeramiento.
+
+<<votes_hc>>=
+D <- dist(votes, method = "euclidean")
+xs <- hclust(D, "single")
+xa <- hclust(D, "average")
+xc <- hclust(D, "complete")
+xl <- list(xs, xa, xc)
+ml <- c("Single", "Average", "Complete")
+sapply(xl, function(h) round(rev(h$height)[1:5], 2))
+sapply(xl, function(h) table(cutree(h, k = 3)))
+@
+
+<<votes_dend, fig.width=8, fig.height=10, out.width="\\textwidth", fig.cap="Dendrogramas de los 50 estados. En el completo se marcan los 3 grupos.">>=
+par(mfrow = c(3, 1), las = 1, mar = c(1, 4, 3, 1))
+for (i in 1:3) {
+  plot(xl[[i]], hang = -1, main = ml[i], sub = "", xlab = "", cex = 0.6)
+}
+rect.hclust(xc, k = 3, border = 2:4)
+@
+
+<<votes_hc_groups>>=
+hcc <- cutree(xc, k = 3)
+split(rownames(votes), hcc)
+round(aggregate(votes, by = list(cluster = hcc), FUN = mean), 2)
+split(rownames(votes), cutree(xa, k = 3))
+@
+
+\textbf{Comentarios.}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Simple:} sufre el efecto cadena; con $k=3$ solo separa a Alabama y a Mississippi como puntos sueltos y deja a los otros 48 juntos. No sirve mucho para interpretar.
+\item \textbf{Promedio:} separa el grupo $\{$Alabama, Louisiana, Mississippi$\}$ y el par $\{$Massachusetts, Rhode Island$\}$, que son los estados menos republicanos en casi todos los años. El resto (45) queda junto.
+\item \textbf{Completo:} es el más balanceado. Aísla otra vez $\{$Alabama, Louisiana, Mississippi$\}$, que votaron muy fuerte por Goldwater en 1964 y muy poco por Nixon en 1968. Un segundo grupo de 10 estados mezcla estados del sur (Georgia, Carolina del Sur, Arkansas, etc.) con Massachusetts, Rhode Island y Hawaii; lo que tienen en común es un voto republicano bajo en 1960 y 1968, aunque por razones muy distintas. El tercer grupo (37) es el resto del país.
+\end{itemize}
+
+%---------------------------------------------------------------------
+\subsubsection*{$k$-medias}
+
+Primero reviso cuántos grupos tomar con la suma de cuadrados dentro de grupos (TWSS), usando la función \texttt{f.twss} de clase.
+
+<<votes_twss, fig.width=6, fig.height=3.8, out.width="0.6\\textwidth", fig.cap="TWSS contra número de clusters.">>=
+f.twss <- function(X, k){
+  twss <- sapply(k, function(k) kmeans(X, k, nstart = 100)$tot.withinss)
+  return(cbind(k = k, twss = twss))
+}
+set.seed(4)
+twss <- f.twss(votes, 1:8)
+round(twss, 1)
+plot(twss, las = 1, type = "b", col = 4, bty = "l", pch = 19,
+     xlab = "Número de clusters k", ylab = "TWSS")
+abline(v = 3, lty = 2)
+@
+
+La TWSS baja mucho de $k=1$ a $k=2$ y de $k=2$ a $k=3$; después las bajadas son cada vez más chicas. El ``codo'' está alrededor de $k=3$, que coincide con la sugerencia del ejercicio.
+
+<<votes_km>>=
+set.seed(4)
+km <- kmeans(votes, centers = 3, nstart = 100)
+km$size
+round(km$centers, 2)
+split(rownames(votes), km$cluster)
+round(c(between = km$betweenss, within = km$tot.withinss, total = km$totss,
+        ratio = km$betweenss / km$totss), 3)
+@
+
+También lo comparo con la función \texttt{my.km} que hicimos en clase:
+
+<<votes_mykm>>=
+source("../rcode/my_kmeans.R")
+set.seed(4)
+a <- my.km(votes, 3)
+table(my.km = a$cluster, kmeans = km$cluster)
+rbind(my.km = unlist(a[c("between.ss", "twithin.ss", "total.ss")]),
+      kmeans = c(km$betweenss, km$tot.withinss, km$totss))
+@
+
+Con un solo arranque aleatorio, \texttt{my.km} se queda en una solución peor (TWSS de \Sexpr{round(a$twithin.ss,1)} contra \Sexpr{round(km$tot.withinss,1)}): junta casi todo en un grupo grande y deja uno de solo 3 estados. Por eso es importante usar \texttt{nstart = 100} en \texttt{kmeans}, que prueba muchos arranques y se queda con el mejor. De aquí en adelante uso el resultado de \texttt{kmeans}.
+
+<<votes_km_prof, fig.width=7, fig.height=4, out.width="0.75\\textwidth", fig.cap="Centros de k-medias (k=3) a lo largo de las elecciones.">>=
+yrs <- as.numeric(names(votes))
+matplot(yrs, t(km$centers), type = "b", pch = 19, lty = 1, col = 1:3,
+        las = 1, xaxt = "n", xlab = "Elección", ylab = "% voto republicano")
+axis(1, at = yrs)
+legend("topleft", legend = paste("Cluster", 1:3, "( n =", km$size, ")"),
+       col = 1:3, lty = 1, pch = 19, bty = "n")
+@
+
+\textbf{Comentarios.} Con $k=3$ los grupos se pueden leer fácil:
+\begin{itemize}[leftmargin=*]
+\item \textbf{Cluster \Sexpr{which.max(km$centers[, "1964"])} (sur profundo, \Sexpr{max(km$size[which.max(km$centers[, "1964"])])} estados):} Alabama, Georgia, Louisiana, Mississippi y Carolina del Sur. Voto republicano bajo en 1960, muy alto en 1964 (Goldwater, alrededor del 65\%), muy bajo en 1968 (en ese año gran parte del voto del sur se fue a un tercer candidato), y otra vez alto en 1972. Es el grupo con el patrón más ``brincado''.
+\item \textbf{Cluster \Sexpr{which.max(km$centers[, "1960"])} (más republicanos, \Sexpr{km$size[which.max(km$centers[, "1960"])]} estados):} sobre todo estados del oeste y de las planicies (Arizona, Colorado, Idaho, Kansas, Nebraska, Utah, Wyoming, etc.) más algunos como Florida, Indiana, Oklahoma y Virginia. Votan más por el republicano que el promedio en casi todas las elecciones.
+\item \textbf{Cluster \Sexpr{setdiff(1:3, c(which.max(km$centers[, "1964"]), which.max(km$centers[, "1960"])))} (menos republicanos, \Sexpr{km$size[setdiff(1:3, c(which.max(km$centers[, "1964"]), which.max(km$centers[, "1960"])))]} estados):} noreste, medio oeste industrial y la costa del Pacífico (Nueva York, Massachusetts, Illinois, Michigan, California, Washington, etc.) más algunos estados del sur y fronterizos (Arkansas, Kentucky, Tennessee, Texas, West Virginia). Siguen el mismo patrón que el grupo anterior pero siempre unos puntos abajo.
+\end{itemize}
+Los dos grupos grandes se mueven en paralelo de una elección a otra (sube y baja el ánimo nacional), y lo que los separa es básicamente el nivel. El grupo pequeño se separa por la forma del patrón, en especial por 1964 y 1968. La razón $\text{BSS}/\text{TSS}$ de \Sexpr{round(km$betweenss/km$totss,2)} dice que los 3 grupos explican cerca del \Sexpr{round(100*km$betweenss/km$totss)}\% de la variabilidad total.
+
+%---------------------------------------------------------------------
+\subsubsection*{Mixtura de densidades (\texttt{Mclust})}
+
+Primero dejo que \texttt{Mclust} escoja el modelo y el número de componentes con el BIC.
+
+<<votes_mc>>=
+library(mclust)
+mc <- Mclust(votes)
+summary(mc)
+split(rownames(votes), mc$classification)
+@
+
+<<votes_bic, fig.width=7, fig.height=4.5, out.width="0.7\\textwidth", fig.cap="BIC de los modelos de mixtura.">>=
+plot(mc, what = "BIC")
+@
+
+Para compararlo con $k$-medias también ajusto con 3 componentes:
+
+<<votes_mc3>>=
+mc3 <- Mclust(votes, G = 3)
+summary(mc3)
+round(mc3$parameters$pro, 3)
+round(t(mc3$parameters$mean), 2)
+split(rownames(votes), mc3$classification)
+round(sort(mc3$uncertainty, decreasing = TRUE)[1:6], 3)
+@
+
+\textbf{Comentarios.}
+\begin{itemize}[leftmargin=*]
+\item Según el BIC el mejor modelo es \texttt{\Sexpr{mc$modelName}} con \Sexpr{mc$G} componentes. Hay que tomar en cuenta que con solo 50 estados y 5 variables, los modelos con covarianzas libres tienen muchos parámetros, y el BIC castiga eso; por eso prefiere pocos grupos.
+\item Con 2 componentes la separación es, a grandes rasgos, sur y estados fronterizos (más algunos como Alaska, Maine y Vermont) contra el resto del país. No es la división por nivel que da $k$-medias, sino una división más ligada a la forma de las covarianzas.
+\item Con 3 componentes (\texttt{\Sexpr{mc3$modelName}}) aparece otra vez un grupo del sur, aunque más amplio que en $k$-medias (agrega Arkansas, Carolina del Norte, Alaska y West Virginia y saca a Carolina del Sur), un grupo grande de noreste, medio oeste y Pacífico, y un grupo del oeste y planicies con algunos estados del sur.
+\item A diferencia de $k$-medias, \texttt{Mclust} da probabilidades de pertenencia. Los estados con mayor incertidumbre son los que quedan ``en la frontera'' entre grupos.
+\end{itemize}
+
+%---------------------------------------------------------------------
+\subsubsection*{Comparación de los métodos}
+
+<<votes_cmp>>=
+table(hclust = hcc, kmeans = km$cluster)
+table(kmeans = km$cluster, mclust3 = mc3$classification)
+table(kmeans = km$cluster, mclust = mc$classification)
+round(c(hc_km = adjustedRandIndex(hcc, km$cluster),
+        km_mc3 = adjustedRandIndex(km$cluster, mc3$classification),
+        hc_mc3 = adjustedRandIndex(hcc, mc3$classification)), 3)
+@
+
+<<votes_pairs, fig.width=8, fig.height=8, out.width="0.85\\textwidth", fig.cap="Arriba de la diagonal: k-medias (k=3). Abajo: Mclust con 3 componentes.">>=
+uprplt <- function(x, y) {points(x, y, col = km$cluster, pch = km$cluster)}
+lwrplt <- function(x, y) {points(x, y, col = mc3$classification, pch = mc3$classification)}
+pairs(votes, lower.panel = lwrplt, upper.panel = uprplt)
+@
+
+\textbf{Interpretación general.}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Lo que todos encuentran:} un núcleo del sur profundo (Alabama, Louisiana, Mississippi, y casi siempre Georgia y Carolina del Sur) con un patrón muy distinto al resto: mucho voto republicano en 1964, poco en 1960 y 1968. Esto es justo lo que se espera por la candidatura de Goldwater en 1964. En 1972 casi todo el país votó republicano (McGovern), así que ese año ayuda poco a separar grupos, salvo que el sur llegó a los niveles más altos.
+\item \textbf{Jerárquico:} depende mucho del tipo de enlace. El simple no sirve aquí por el efecto cadena; el completo da algo interpretable, pero su segundo grupo mezcla estados que coinciden en tener voto bajo en 1960 y 1968 aunque por razones muy distintas (el sur y Massachusetts/Rhode Island). Además, una vez que une dos estados ya no los puede separar.
+\item \textbf{$k$-medias con $k=3$:} es la lectura más clara: sur profundo, estados más republicanos (oeste y planicies) y estados menos republicanos (noreste, medio oeste industrial, Pacífico). Los dos grupos grandes se distinguen por el nivel y el pequeño por la forma del patrón. La desventaja es que asume grupos más o menos esféricos y del mismo tamaño.
+\item \textbf{Mixtura de densidades:} permite grupos con distinta forma y tamaño y da una medida de incertidumbre, lo cual es útil para los estados en la frontera. Pero con tan pocos datos el BIC se queda con 2 componentes y los grupos son menos fáciles de explicar que los de $k$-medias. Con 3 componentes se parece más a $k$-medias, sobre todo en el grupo del sur.
+\item Las tablas y el índice de Rand ajustado (valores entre 0.17 y 0.30) muestran que el acuerdo entre métodos es bajo a moderado. Coinciden en el grupo atípico del sur, pero reparten de forma distinta a los estados ``del medio''. Por ejemplo, el grupo grande de 37 estados del completo se parte casi a la mitad en $k$-medias (19 y 18), es decir, el completo no separa por nivel de voto como sí lo hace $k$-medias.
+\end{itemize}
+
+En resumen, para estos datos me quedo con $k$-medias con $k=3$ como la partición más fácil de interpretar, y uso el completo y \texttt{Mclust} para confirmar que el grupo del sur es real y no un resultado de un solo método.
+
+\end{document}
